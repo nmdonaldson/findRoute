@@ -58,7 +58,7 @@ def graph_modeler(input):
 
 
 # Uses Dijkstra's algorithm to search the maze for the shortest path between the
-# start and target cities using a priority queue
+# start and target cities using a min-priority queue
 # Refrences: https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm and
 # https://towardsdatascience.com/introduction-to-priority-queues-in-python-83664d3178c3
 def dijkstra_search(graph, start, end):
@@ -72,25 +72,21 @@ def dijkstra_search(graph, start, end):
     # Priority queue of vertices used to find the solution
     bigQ = [(0, start)]
 
-    while True:
-        # If the queue runs out of cities without reaching the end, the distance is infinite
-        # And the path does not exist
-        if len(bigQ) == 0:
-            return distances, previous
-            #return [], []
-
+    # Keeps going until the entire connected graph section is traversed or until the program
+    # finds the target city
+    while len(bigQ) > 0:
         distance, current = heapq.heappop(bigQ)
 
-        # #If the end city is reached, stop the loop
-        # if current == end:
-        #     break
-        # Compares the distance between adjacent vertices and alternate paths
-        # if distance > distances[current]:
-        #     continue
+        # If the target city is reached, stop the algorithm to save time + space
+        if current == end:
+            break
 
+        # Checks the adjacent cities to the current vertex city to see which is the closest
         for adjacent, cost in graph[current]:
             alternate = distance + cost
-            # If a new, better, path among the adjacent vertices is found, switch to it
+
+            # If a new, better, path to the current vertex from the starting vertex is found,
+            # switch to that shorter path
             if alternate < distances[adjacent]:
                 distances[adjacent] = alternate
                 previous[adjacent] = current
@@ -99,33 +95,46 @@ def dijkstra_search(graph, start, end):
     return distances, previous
 
 
-
-# Prints the results
-def print_results(distances, prev, start, end):
-    distance = ''
+# Prints the results of the dijkstra search
+def print_shortest_path(graph, distances, prev, start, end):
+    # Total distance traveled by the algorithm to reach the origin to the end
+    totalDist = distances[end]
+    # Path list holds strings that keep track of the path taken
+    interSteps = []
     path = ''
 
-    # If a valid path does not exist, indicate an infinite distance with no possible route
-    if len(distances) == 0:
-        distance = 'infinity'
+    # If the total distance between the target and end cities is infinite, no path exists
+    if distances[end] == sys.maxsize:
+        totalDist = 'infinity'
         path = 'none'
-    # Otherwise, print the path and the distance
+    
+    # Otherwise, trace the path list back to the beginning to get the path taken 
+    # (and the distances between each intermediate step)
     else:
-        # Tracing the previous city record for the cities traveled
         traceback = end
-        temp = 0
-        while True:
-            temp += distances[traceback]
-            path += prev[traceback] + ' to ' + traceback + ' ' + str(distances[traceback]) + ' km\n'
-            traceback = prev[traceback]
-            if traceback == start:
-                break
-        distance = str(temp) + ' km'
+
+        # Tracing the previous city record for the cities traveled  
+        while traceback != start:
+            tempdist = 0
+            back = prev[traceback]
+
+            # Searches adjacent cities for the one traveled by the algorithm
+            for city in graph[back]:
+                if city[0] == traceback:
+                    tempdist = city[1]
+            
+            # Adding the relevant information to the path list
+            interSteps.append(back + ' to ' + traceback + ' ' + str(tempdist) + ' km\n')
+            traceback = back
         
-    print('distance: ', distance, '\nroute:\n', path, sep='', end = '')
+        # Reformatting the path list to adhere to output format
+        for step in reversed(interSteps):
+            path += step
+    
+    # Finally, print the results to the console
+    print('distance: ', totalDist, '\nroute:\n', path, sep='', end = '')
         
 file, start, end = input_handler()
-pickles = graph_modeler(file)
-#dists, prevs = dijkstra_search(graph_modeler(file), start, end)
-#print(dists)
-#print_results(dists, prevs, start, end)
+cityGraph = graph_modeler(file)
+dists, prevs = dijkstra_search(cityGraph, start, end)
+print_shortest_path(cityGraph, dists, prevs, start, end)
