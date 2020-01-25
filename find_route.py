@@ -1,4 +1,6 @@
 import argparse
+import sys
+from queue import PriorityQueue
 
 # Handles command line inputs
 def input_handler():
@@ -18,7 +20,7 @@ def input_handler():
     return input, origin, target
 
 # Models the input file as a graph from an input file
-def graph_modeler(input, origin, target):
+def graph_modeler(input):
 
     # Opens input file
     fileHandler = open(input)
@@ -37,12 +39,12 @@ def graph_modeler(input, origin, target):
 
         # If the city exists in the graph already, add the next adjacent city to the value list
         if info[0] in cityGraph:
-            cityGraph[info[0]].append((info[1], info[2]))
+            cityGraph[info[0]].append((info[1], int(info[2])))
         # Otherwise, create a new list at this index 
         else:
-            cityGraph[info[0]] = [(info[1], info[2])]
+            cityGraph[info[0]] = [(info[1], int(info[2]))]
             # This graph is undirected, so include both directions
-            cityGraph[info[1]] = [(info[0], info[2])]
+            cityGraph[info[1]] = [(info[0], int(info[2]))]
         
         # Read the next line
         line = fileHandler.readline()
@@ -51,6 +53,75 @@ def graph_modeler(input, origin, target):
     return cityGraph
 
 
-# TODO: Verify the graph model
+# Uses Dijkstra's algorithm to search the maze for the shortest path between the
+# start and target cities using a priority queue
+# Refrences: https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm and
+# https://towardsdatascience.com/introduction-to-priority-queues-in-python-83664d3178c3
+def dijkstra_search(graph, start, end):
+    # Initializing the needed data structures
+    distances = {vertex: sys.maxsize for vertex in graph}
+    distances[start] = 0
+
+    # Record of path taken
+    previous = {vertex: '' for vertex in graph}
+
+    # Priority queue of vertices used to find the solution
+    bigQ = PriorityQueue()
+    bigQ.put((0, start))
+
+    while True:
+        # If the queue runs out of cities without reaching the end, the distance is infinite
+        # And the path does not exist
+        if bigQ.empty():
+            return [], []
+
+        distance, current = bigQ.get()
+
+        # Compares the distance between adjacent vertices and alternate paths
+        if distance > distances[current]:
+            continue
+        # If the end city is reached, stop the loop
+        elif current == end:
+            break
+
+        # If a new, better, path among the adjacent vertices is found, switch to it
+        for adjacent, cost in graph[current]:
+            alternate = distance + cost
+            if alternate < distances[adjacent]:
+                distances[adjacent] = alternate
+                previous[adjacent] = current
+                bigQ.put((alternate, adjacent))
+
+    return distances, previous
+
+
+
+# Prints the results
+def print_results(distances, prev, start, end):
+    distance = ''
+    path = ''
+
+    # If a valid path does not exist, indicate an infinite distance with no possible route
+    if len(distances) == 0:
+        distance = 'infinity'
+        path = 'none'
+    # Otherwise, print the path and the distance
+    else:
+        # Tracing the previous city record for the cities traveled
+        traceback = end
+        temp = 0
+        while True:
+            temp += distances[traceback]
+            path += prev[traceback] + ' to ' + traceback + ' ' + str(distances[traceback]) + ' km\n'
+            traceback = prev[traceback]
+            if traceback == start:
+                break
+        distance = str(temp) + ' km'
+        
+    print('distance: ', distance, '\nroute:\n', path, sep='', end = '')
+        
 file, start, end = input_handler()
-print(graph_modeler(file, start, end))
+pickles = graph_modeler(file)
+dists, prevs = dijkstra_search(graph_modeler(file), start, end)
+print(prevs)
+print_results(dists, prevs, start, end)
