@@ -5,7 +5,7 @@ import heapq
 # Handles command line inputs
 def input_handler():
     # Command line parser to handle inputs, all of which are required for the program to run
-    parser = argparse.ArgumentParser(description='Recieves exactly 3 command line inputs to find a route between any two cities.')
+    parser = argparse.ArgumentParser(description="An implementation of dijkstra's algorithm to find the shortest path between two cities on a graph/map.")
     parser.add_argument('-i', '--input', required=True, type=str, help='The name of the (correctly formatted) input file.')
     parser.add_argument('-o', '--origin', required=True, type=str, help='The name of the starting location/city.')
     parser.add_argument('-t', '--target', required=True, type=str, help='The name of the destination location/city.')
@@ -98,7 +98,7 @@ def dijkstra_search(graph, start, end):
 # Prints the results of the dijkstra search
 def print_shortest_path(graph, distances, prev, start, end):
     # Total distance traveled by the algorithm to reach the origin to the end
-    totalDist = distances[end]
+    totalDist = str(distances[end]) + ' km'
     # Path list holds strings that keep track of the path taken
     interSteps = []
     path = ''
@@ -106,7 +106,7 @@ def print_shortest_path(graph, distances, prev, start, end):
     # If the total distance between the target and end cities is infinite, no path exists
     if distances[end] == sys.maxsize:
         totalDist = 'infinity'
-        path = 'none'
+        path = 'none\n'
     
     # Otherwise, trace the path list back to the beginning to get the path taken 
     # (and the distances between each intermediate step)
@@ -124,7 +124,7 @@ def print_shortest_path(graph, distances, prev, start, end):
                     tempdist = city[1]
             
             # Adding the relevant information to the path list
-            interSteps.append(back + ' to ' + traceback + ' ' + str(tempdist) + ' km\n')
+            interSteps.append(back + ' to ' + traceback + ', ' + str(tempdist) + ' km\n')
             traceback = back
         
         # Reformatting the path list to adhere to output format
