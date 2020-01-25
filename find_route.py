@@ -1,6 +1,6 @@
 import argparse
 import sys
-from queue import PriorityQueue
+import heapq
 
 # Handles command line inputs
 def input_handler():
@@ -40,6 +40,10 @@ def graph_modeler(input):
         # If the city exists in the graph already, add the next adjacent city to the value list
         if info[0] in cityGraph:
             cityGraph[info[0]].append((info[1], int(info[2])))
+            if info[1] in cityGraph:
+                cityGraph[info[1]].append((info[0], int(info[2])))
+            else:
+                cityGraph[info[1]] = [(info[0], int(info[2]))]
         # Otherwise, create a new list at this index 
         else:
             cityGraph[info[0]] = [(info[1], int(info[2]))]
@@ -66,31 +70,31 @@ def dijkstra_search(graph, start, end):
     previous = {vertex: '' for vertex in graph}
 
     # Priority queue of vertices used to find the solution
-    bigQ = PriorityQueue()
-    bigQ.put((0, start))
+    bigQ = [(0, start)]
 
     while True:
         # If the queue runs out of cities without reaching the end, the distance is infinite
         # And the path does not exist
-        if bigQ.empty():
-            return [], []
+        if len(bigQ) == 0:
+            return distances, previous
+            #return [], []
 
-        distance, current = bigQ.get()
+        distance, current = heapq.heappop(bigQ)
 
+        # #If the end city is reached, stop the loop
+        # if current == end:
+        #     break
         # Compares the distance between adjacent vertices and alternate paths
-        if distance > distances[current]:
-            continue
-        # If the end city is reached, stop the loop
-        elif current == end:
-            break
+        # if distance > distances[current]:
+        #     continue
 
-        # If a new, better, path among the adjacent vertices is found, switch to it
         for adjacent, cost in graph[current]:
             alternate = distance + cost
+            # If a new, better, path among the adjacent vertices is found, switch to it
             if alternate < distances[adjacent]:
                 distances[adjacent] = alternate
                 previous[adjacent] = current
-                bigQ.put((alternate, adjacent))
+                heapq.heappush(bigQ, (alternate, adjacent))
 
     return distances, previous
 
@@ -122,6 +126,6 @@ def print_results(distances, prev, start, end):
         
 file, start, end = input_handler()
 pickles = graph_modeler(file)
-dists, prevs = dijkstra_search(graph_modeler(file), start, end)
-print(prevs)
-print_results(dists, prevs, start, end)
+#dists, prevs = dijkstra_search(graph_modeler(file), start, end)
+#print(dists)
+#print_results(dists, prevs, start, end)
